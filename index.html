@@ -1,13 +1,78 @@
-<!-- index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My HTML Server</title>
+    <meta charset="utf-8">
+    <title>Rotating Cube</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #fff;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    <h1>Hello, World!</h1>
-    <p>Welcome to my simple HTML server powered by Node.js!</p>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // 立方体の作成（グレーに変更）
+        const geometry = new THREE.BoxGeometry(2, 2, 2);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x808080,  // グレー
+            shininess: 100
+        });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+
+        // ライトの追加
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 5, 5);
+        scene.add(light);
+
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        camera.position.z = 5;
+
+        const rotationSpeed = {
+            x: Math.random() * 0.02 - 0.01,
+            y: Math.random() * 0.02 - 0.01,
+            z: Math.random() * 0.02 - 0.01
+        };
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            cube.rotation.x += rotationSpeed.x;
+            cube.rotation.y += rotationSpeed.y;
+            cube.rotation.z += rotationSpeed.z;
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', onWindowResize, false);
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        animate();
+    </script>
 </body>
 </html>
