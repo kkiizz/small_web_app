@@ -14,9 +14,12 @@
             height: 100vh;
             transition: background-color 2s ease;
             font-family: Arial, sans-serif;
+            touch-action: none;
         }
         #clock {
-            font-size: 48px;
+            font-size: min(15vw, 120px);
+            width: 80%;
+            text-align: center;
             margin: 20px 0;
             font-weight: bold;
             color: #333;
@@ -25,6 +28,7 @@
         }
         canvas {
             display: block;
+            touch-action: none;
         }
         #stars {
             position: fixed;
@@ -74,47 +78,39 @@
             const stars = document.getElementById('stars');
             
             if (hours >= 5 && hours < 10) {
-                // 朝（5:00-9:59）: 明るい青空とオレンジがかった太陽
-                cubeColor = 0xFFA500;  // オレンジ色の立方体
-                backgroundColor = '#87CEEB';  // 明るい青空
+                cubeColor = 0xFFA500;
+                backgroundColor = '#87CEEB';
                 clockColor = '#333';
                 stars.style.opacity = '0';
             } else if (hours >= 10 && hours < 16) {
-                // 昼（10:00-15:59）: 青空と白い雲をイメージ
-                cubeColor = 0xFFFFFF;  // 白い立方体
-                backgroundColor = '#4A90E2';  // 鮮やかな青空
+                cubeColor = 0xFFFFFF;
+                backgroundColor = '#4A90E2';
                 clockColor = '#333';
                 stars.style.opacity = '0';
             } else if (hours >= 16 && hours < 19) {
-                // 夕方（16:00-18:59）: 夕焼け
-                cubeColor = 0xFF6B6B;  // 赤みがかった立方体
-                backgroundColor = '#FF7F50';  // 夕焼け色
+                cubeColor = 0xFF6B6B;
+                backgroundColor = '#FF7F50';
                 clockColor = '#333';
                 stars.style.opacity = '0';
             } else {
-                // 夜（19:00-4:59）: 星空
-                cubeColor = 0xE6E6FA;  // 薄紫の立方体
-                backgroundColor = '#1a237e';  // 濃い青の夜空
+                cubeColor = 0xE6E6FA;
+                backgroundColor = '#1a237e';
                 clockColor = '#FFF';
                 stars.style.opacity = '1';
             }
             
-            // 背景色とテキスト色を更新
             document.body.style.backgroundColor = backgroundColor;
             clock.style.color = clockColor;
             
-            // 立方体の色を更新
             if (cube && cube.material) {
                 cube.material.color.setHex(cubeColor);
             }
             
-            // シーンの背景色を更新
             if (scene) {
                 scene.background = new THREE.Color(backgroundColor);
             }
         }
 
-        // 星のアニメーションのスタイルを追加
         const style = document.createElement('style');
         style.textContent = `
             @keyframes twinkle {
@@ -125,13 +121,9 @@
         `;
         document.head.appendChild(style);
 
-        // 星空を生成
         createStars();
-
-        // 時計の更新を開始
         setInterval(updateClock, 1000);
 
-        // Three.jsのセットアップ
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -139,7 +131,6 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // 立方体の作成
         const geometry = new THREE.BoxGeometry(2, 2, 2);
         const material = new THREE.MeshPhongMaterial({
             shininess: 100
@@ -147,7 +138,6 @@
         const cube = new THREE.Mesh(geometry, material);
         scene.add(cube);
 
-        // ライトの追加
         const light = new THREE.DirectionalLight(0xffffff, 1);
         light.position.set(5, 5, 5);
         scene.add(light);
@@ -157,18 +147,102 @@
 
         camera.position.z = 5;
 
-        const rotationSpeed = {
-            x: Math.random() * 0.02 - 0.01,
-            y: Math.random() * 0.02 - 0.01,
-            z: Math.random() * 0.02 - 0.01
+        // 基本回転速度の設定
+        const baseRotationSpeed = {
+            x: (Math.random() - 0.5) * 0.01,
+            y: (Math.random() - 0.5) * 0.01,
+            z: (Math.random() - 0.5) * 0.01
         };
+
+        // 現在の回転速度
+        const currentRotation = {
+            x: baseRotationSpeed.x,
+            y: baseRotationSpeed.y,
+            z: baseRotationSpeed.z
+        };
+
+        // スワイプ操作の管理
+        let isDragging = false;
+        let previousTouch = {
+            x: 0,
+            y: 0
+        };
+        let userRotation = {
+            x: 0,
+            y: 0
+        };
+
+        // 回転速度を基本速度に徐々に戻す係数
+        const returnFactor = 0.95;
+
+        // タッチイベントの処理
+        renderer.domElement.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            previousTouch.x = e.touches[0].clientX;
+            previousTouch.y = e.touches[0].clientY;
+        });
+
+        renderer.domElement.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+
+            const deltaX = e.touches[0].clientX - previousTouch.x;
+            const deltaY = e.touches[0].clientY - previousTouch.y;
+
+            userRotation.y = deltaX * 0.005;
+            userRotation.x = -deltaY * 0.005;
+
+            previousTouch.x = e.touches[0].clientX;
+            previousTouch.y = e.touches[0].clientY;
+
+            e.preventDefault();
+        });
+
+        renderer.domElement.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        // マウスイベントの処理
+        renderer.domElement.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousTouch.x = e.clientX;
+            previousTouch.y = e.clientY;
+        });
+
+        renderer.domElement.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            const deltaX = e.clientX - previousTouch.x;
+            const deltaY = e.clientY - previousTouch.y;
+
+            userRotation.y = deltaX * 0.005;
+            userRotation.x = -deltaY * 0.005;
+
+            previousTouch.x = e.clientX;
+            previousTouch.y = e.clientY;
+        });
+
+        renderer.domElement.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
 
         function animate() {
             requestAnimationFrame(animate);
 
-            cube.rotation.x += rotationSpeed.x;
-            cube.rotation.y += rotationSpeed.y;
-            cube.rotation.z += rotationSpeed.z;
+            // ユーザーの回転入力を減衰
+            if (!isDragging) {
+                userRotation.x *= returnFactor;
+                userRotation.y *= returnFactor;
+            }
+
+            // 現在の回転速度を基本速度に徐々に戻す
+            currentRotation.x = currentRotation.x * returnFactor + baseRotationSpeed.x * (1 - returnFactor);
+            currentRotation.y = currentRotation.y * returnFactor + baseRotationSpeed.y * (1 - returnFactor);
+            currentRotation.z = currentRotation.z * returnFactor + baseRotationSpeed.z * (1 - returnFactor);
+
+            // 最終的な回転を適用
+            cube.rotation.x += currentRotation.x + userRotation.x;
+            cube.rotation.y += currentRotation.y + userRotation.y;
+            cube.rotation.z += currentRotation.z;
 
             renderer.render(scene, camera);
         }
@@ -181,7 +255,13 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // 初期色を設定
+        // 定期的に基本回転速度をランダムに変更
+        setInterval(() => {
+            baseRotationSpeed.x = (Math.random() - 0.5) * 0.01;
+            baseRotationSpeed.y = (Math.random() - 0.5) * 0.01;
+            baseRotationSpeed.z = (Math.random() - 0.5) * 0.01;
+        }, 10000); // 10秒ごとに回転方向を変更
+
         updateClock();
         animate();
     </script>
