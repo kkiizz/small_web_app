@@ -3,7 +3,7 @@ services:
   node-app:
     build: .
     ports:
-      - "443:3000"  # 変更：ホストの80番ポートをコンテナの3000番ポートにマッピング
+      - "80:3000"  # 変更：ホストの80番ポートをコンテナの3000番ポートにマッピング
     volumes:
       - .:/usr/src/app
     container_name: node_html_server
